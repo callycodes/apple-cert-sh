@@ -19,16 +19,21 @@ echo "Generated password: $password" > passphrase.txt
 # Generate the signerKey.key file
 openssl genrsa -out signerKey.key -passout pass:"${password}" 2048
 
-# Read email from config.json
-email=$(jq -r '.email' config.json)
-
-# Check if the email was successfully read
-if [ -z "$email" ]; then
-    echo "Error: No email found in config.json"
+# Source the .env file to get the email
+if [ -f ../.env ]; then
+    source ../.env
+else
+    echo "Error: .env file not found"
     exit 1
 fi
 
-# Create the file.cnf file with the email from config.json
+# Check if the email was successfully read
+if [ -z "$EMAIL" ]; then
+    echo "Error: No email found in .env"
+    exit 1
+fi
+
+# Create the file.cnf file with the email from .env
 cat > file.cnf << EOF
 [req]
 input_password = $password
@@ -42,14 +47,15 @@ stateOrProvinceName = United States
 localityName = EMPTY
 organizationName = Apple Inc
 organizationalUnitName = IT
-emailAddress = $email
+emailAddress = $EMAIL
 EOF
 
 # Create the request.certSigningRequest file
 openssl req -new -key signerKey.key -config file.cnf -out request.certSigningRequest
+echo "1. Upload the request.certSigningRequest from the new folder at https://developer.apple.com/account/resources/identifiers/passTypeId/add/"
+echo "2. Download the certificate and place it in the new folder (script looks for .cer files)"
 
-# Output a message and wait for user to enter Y
-echo "Press Y to continue:"
+echo "Once you've done these steps press Y to continue:"
 read input
 if [ "$input" == "Y" ]; then
     # Find the .cer file in the directory

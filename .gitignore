@@ -1,4 +1,4 @@
 *
 !.gitignore
 !helper.sh
-!config.json
+!.env
